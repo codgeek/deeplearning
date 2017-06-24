@@ -17,12 +17,16 @@ numgrad = zeros(size(theta));
 % respect to theta(i).
 %                
 % Hint: You will probably want to compute the elements of numgrad one at a time. 
-
-
-
-
-
-
+eps=1e-4;
+len=length(theta);
+% justCheckCost = true;
+for i=1:len
+    thetaplus=theta;
+    thetaplus(i) = thetaplus(i) + eps;
+    thetaminus=theta;
+    thetaminus(i) = thetaminus(i) - eps;
+    numgrad(i) = (J(thetaplus) - J(thetaminus))./(2*eps);
+end
 
 
 %% ---------------------------------------------------------------

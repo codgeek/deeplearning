@@ -1,5 +1,5 @@
 function [cost,grad] = sparseAutoencoderCost(theta, visibleSize, hiddenSize, ...
-                                             lambda, sparsityParam, beta, data)
+                                             lambda, sparsityParam, beta, data, justCheckCost)
 
 % visibleSize: the number of input units (probably 64) 
 % hiddenSize: the number of hidden units (probably 25) 
@@ -12,6 +12,10 @@ function [cost,grad] = sparseAutoencoderCost(theta, visibleSize, hiddenSize, ...
 % The input theta is a vector (because minFunc expects the parameters to be a vector). 
 % We first convert theta to the (W1, W2, b1, b2) matrix/vector format, so that this 
 % follows the notation convention of the lecture notes. 
+
+if ~exist('justCheckCost', 'var') || isempty(justCheckCost)
+    justCheckCost = false;
+end
 
 W1 = reshape(theta(1:hiddenSize*visibleSize), hiddenSize, visibleSize);
 W2 = reshape(theta(hiddenSize*visibleSize+1:2*hiddenSize*visibleSize), visibleSize, hiddenSize);
@@ -42,24 +46,38 @@ b2grad = zeros(size(b2));
 % the gradient descent update to W1 would be W1 := W1 - alpha * W1grad, and similarly for W2, b1, b2. 
 % 
 
+% forward propagation
 
+[~, m] = size(data); % visibleSize¡ÁN_samples£¬ m=N_samples
+a2 = sigmoid(W1*data + b1*ones(1,m));% active value of hiddenlayer: hiddenSize¡ÁN_samples
+a3 = sigmoid(W2*a2 + b2*ones(1,m));% output result: visibleSize¡ÁN_samples
+diff = a3 - data;
+penalty = mean(a2, 2); %  measure of hiddenlayer active: hiddenSize¡Á1
+residualPenalty =  (-sparsityParam./penalty + (1 - sparsityParam)./(1 - penalty)).*beta; % penalty factor in residual error delta2
+% size(residualPenalty)
+cost = sum(sum((diff.*diff)))./(2*m) + ...
+    (sum(sum(W1.*W1)) + sum(sum(W2.*W2))).*lambda./2 + ...
+    beta.*sum(KLdivergence(sparsityParam, penalty));
+if justCheckCost
+    return;
+end
 
+% back propagation
+ delta3 = -(data-a3).*(a3.*(1-a3)); %  visibleSize¡ÁN_samples
+%  delta2 = (W2'*delta3 ).*(a2.*(1-a2)); %  hiddenSize¡ÁN_samples. !!! => W2'*delta3 not W1'*delta3
+ delta2 = (W2'*delta3 + residualPenalty*ones(1, m)).*(a2.*(1-a2)); %  hiddenSize¡ÁN_samples. !!! => W2'*delta3 not W1'*delta3
 
+ W2grad = (a2*(delta3'))'; % ¨ŒJ(L)=delta(L+1,i)*a(l,j). sum of grade value from N_samples is got by matrix product hiddenSize¡ÁN_samples * N_samples¡ÁvisibleSize. so mean value is caculated by "/N_samples"
+ W1grad = (data*(delta2'))';% matrix product  visibleSize¡ÁN_samples * N_samples¡ÁhiddenSize
+ 
+ b1grad = sum(delta2, 2);
+ b2grad = sum(delta3, 2);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+% mean value across N_sample
+W1grad=W1grad./m + lambda.*W1;
+W2grad=W2grad./m + lambda.*W2;
+b1grad=b1grad./m;
+b2grad=b2grad./m;% mean value across N_sample: visibleSize ¡Á1
 %-------------------------------------------------------------------
 % After computing the cost and gradient, we will convert the gradients back
 % to a vector format (suitable for minFunc).  Specifically, we will unroll
@@ -79,3 +97,6 @@ function sigm = sigmoid(x)
     sigm = 1 ./ (1 + exp(-x));
 end
 
+function value = KLdivergence(pmean, p)
+    value = pmean.*log(pmean./p) + (1- pmean).*log((1 - pmean)./( 1 - p));
+end

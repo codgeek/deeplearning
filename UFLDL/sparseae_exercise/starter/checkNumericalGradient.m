@@ -12,10 +12,10 @@ x = [4; 10];
 
 % Use your code to numerically compute the gradient of simpleQuadraticFunction at x.
 % (The notation "@simpleQuadraticFunction" denotes a pointer to a function.)
-numgrad = computeNumericalGradient(@simpleQuadraticFunction, x);
+numgrad = computeNumericalGradient(@(x) simpleQuadraticFunction(x), x);
 
 % Visually examine the two gradient computations.  The two columns
-% you get should be very similar. 
+% you get should be very similar.
 disp([numgrad grad]);
 fprintf('The above two columns you get should be very similar.\n(Left-Your Numerical Gradient, Right-Analytical Gradient)\n\n');
 
@@ -29,7 +29,7 @@ end
 
 
   
-function [value,grad] = simpleQuadraticFunction(x)
+function [value,grad] = simpleQuadraticFunction(x, ~)
 % this function accepts a 2D vector as input. 
 % Its outputs are:
 %   value: h(x1, x2) = x1^2 + 3*x1*x2
