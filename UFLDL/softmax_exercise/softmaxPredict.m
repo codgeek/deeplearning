@@ -11,11 +11,14 @@ function [pred] = softmaxPredict(softmaxModel, data)
 theta = softmaxModel.optTheta;  % this provides a numClasses x inputSize matrix
 pred = zeros(1, size(data, 2));
 
+inputSize = softmaxModel.inputSize;
+numClasses=  softmaxModel.numClasses;
+
 %% ---------- YOUR CODE HERE --------------------------------------
 %  Instructions: Compute pred using theta assuming that the labels start 
 %                from 1.
-
-
+z=exp(theta*data);
+[~, pred] = max(z);
 
 
 

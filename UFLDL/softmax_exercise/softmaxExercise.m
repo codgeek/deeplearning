@@ -16,10 +16,10 @@
 %  Here we define and initialise some constants which allow your code
 %  to be used more generally on any arbitrary input. 
 %  We also initialise some parameters used for tuning the model.
-
-inputSize = 28 * 28; % Size of input vector (MNIST images are 28x28)
+sideLen = 28;
+inputSize = sideLen * sideLen; % Size of input vector (MNIST images are 28x28)
 numClasses = 10;     % Number of classes (MNIST images fall into 10 classes)
-
+dataNum = 60000;
 lambda = 1e-4; % Weight decay parameter
 
 %%======================================================================
@@ -34,21 +34,26 @@ lambda = 1e-4; % Weight decay parameter
 % Change the filenames if you've saved the files under different names
 % On some platforms, the files might be saved as 
 % train-images.idx3-ubyte / train-labels.idx1-ubyte
+addpath('../mnist');
+addpath('../sparseae_exercise/starter');
+images = loadMNISTImages('train-images.idx3-ubyte');
+labels = loadMNISTLabels('train-labels.idx1-ubyte');
 
-images = loadMNISTImages('mnist/train-images-idx3-ubyte');
-labels = loadMNISTLabels('mnist/train-labels-idx1-ubyte');
 labels(labels==0) = 10; % Remap 0 to 10
-
-inputData = images;
+labels = labels(1:dataNum);
+labels = labels';
+inputData = images(:,1:dataNum);
 
 % For debugging purposes, you may wish to reduce the size of the input data
 % in order to speed up gradient checking. 
 % Here, we create synthetic dataset using random data for testing
 
-DEBUG = true; % Set DEBUG to true when debugging.
+DEBUG = false; % Set DEBUG to true when debugging.
 if DEBUG
+    display_network(images(:,1:100)); % Show the first 100 images
+    disp(labels(1:10));
     inputSize = 8;
-    inputData = randn(8, 100);
+    inputData = rand(8, 100);
     labels = randi(10, 100, 1);
 end
 
@@ -61,7 +66,7 @@ theta = 0.005 * randn(numClasses * inputSize, 1);
 %  Implement softmaxCost in softmaxCost.m. 
 
 [cost, grad] = softmaxCost(theta, numClasses, inputSize, lambda, inputData, labels);
-                                     
+                                 
 %%======================================================================
 %% STEP 3: Gradient checking
 %
@@ -70,8 +75,8 @@ theta = 0.005 * randn(numClasses * inputSize, 1);
 % 
 
 if DEBUG
-    numGrad = computeNumericalGradient( @(x) softmaxCost(x, numClasses, ...
-                                    inputSize, lambda, inputData, labels), theta);
+    numGrad = computeNumericalGradient( @(x, justCheckCost) softmaxCost(x, numClasses, ...
+                                    inputSize, lambda, inputData, labels, justCheckCost), theta);
 
     % Use this to visually compare the gradients side by side
     disp([numGrad grad]); 
@@ -79,6 +84,13 @@ if DEBUG
     % Compare numerically computed gradients with those computed analytically
     diff = norm(numGrad-grad)/norm(numGrad+grad);
     disp(diff); 
+    
+    figure;
+    plot(numGrad, '-o');
+    hold on;
+    plot(grad, '-s');
+    legend('numeric grad','derivate grad');
+    return;
     % The difference should be small. 
     % In our implementation, these values are usually less than 1e-7.
 
@@ -92,7 +104,9 @@ end
 %  you can start training your softmax regression code using softmaxTrain
 %  (which uses minFunc).
 
-options.maxIter = 100;
+options.maxIter = 400;
+options.maxFunEvals = 500;
+% options.TolFun = 1e-7;
 softmaxModel = softmaxTrain(inputSize, numClasses, lambda, ...
                             inputData, labels, options);
                           
@@ -107,9 +121,8 @@ softmaxModel = softmaxTrain(inputSize, numClasses, lambda, ...
 %  To do this, you will first need to write softmaxPredict
 %  (in softmaxPredict.m), which should return predictions
 %  given a softmax model and the input data.
-
-images = loadMNISTImages('mnist/t10k-images-idx3-ubyte');
-labels = loadMNISTLabels('mnist/t10k-labels-idx1-ubyte');
+images = loadMNISTImages('t10k-images.idx3-ubyte');
+labels = loadMNISTLabels('mnist/t10k-labels.idx1-ubyte');
 labels(labels==0) = 10; % Remap 0 to 10
 
 inputData = images;

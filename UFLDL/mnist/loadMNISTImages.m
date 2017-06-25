@@ -14,7 +14,7 @@ numCols = fread(fp, 1, 'int32', 0, 'ieee-be');
 
 images = fread(fp, inf, 'unsigned char');
 images = reshape(images, numCols, numRows, numImages);
-images = permute(images,[2 1 3]);
+images = permute(images,[2 1 3]);% 交换不同维，转置的推广
 
 fclose(fp);
 
