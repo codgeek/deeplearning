@@ -13,14 +13,14 @@
 %  allow your sparse autoencoder to get good filters; you do not need to 
 %  change the parameters below.
 
-inputSize  = 28 * 28;
-numLabels  = 5;
-hiddenSize = 200;
+inputSize  = 28 * 28;% 28*28
+numLabels  = 5;      % 5
+hiddenSize = 196;    % 200
 sparsityParam = 0.1; % desired average activation of the hidden units.
                      % (This was denoted by the Greek alphabet rho, which looks like a lower-case "p",
 		             %  in the lecture notes). 
-lambda = 3e-3;       % weight decay parameter       
-beta = 3;            % weight of sparsity penalty term   
+lambda = 3e-3;       % weight decay parameter       3e-3 
+beta = 3;            % weight of sparsity penalty term   3
 maxIter = 400;
 
 %% ======================================================================
@@ -29,28 +29,41 @@ maxIter = 400;
 %  This loads our training and test data from the MNIST database files.
 %  We have sorted the data for you in this so that you will not have to
 %  change it.
-
+addpath('../mnist');
+addpath('../sparseae_exercise/starter/minFunc');
+addpath('../sparseae_exercise/starter');
+addpath('../softmax_exercise');
 % Load MNIST database files
-mnistData   = loadMNISTImages('mnist/train-images-idx3-ubyte');
-mnistLabels = loadMNISTLabels('mnist/train-labels-idx1-ubyte');
+mnistData   = loadMNISTImages('train-images.idx3-ubyte');
+mnistLabels = loadMNISTLabels('train-labels.idx1-ubyte');
 
-% Set Unlabeled Set (All Images)
+% 拆分无监督学习和softmax监督学习方法一
+% % 由于流程是在6-10上无监督学习，1-5上有监督学习，如果把0映射到10，识别率稳定在97.3%， 而如果把label号+1平移，识别率稳定在98.3%， 数据不够均匀引起的
+% mnistLabels = mnistLabels + 1;% shift 0-9 to 1-10 %
+% unlabeledData = mnistData(:,mnistLabels>5);
+% labeledData = mnistData(:,mnistLabels<6);
+% labels = mnistLabels(mnistLabels<6);
 
-% Simulate a Labeled and Unlabeled set
-labeledSet   = find(mnistLabels >= 0 & mnistLabels <= 4);
-unlabeledSet = find(mnistLabels >= 5);
+% 拆分无监督学习和softmax监督学习方法二 
+% % 对数据无监督学习和监督学习的处理如果不区分0-4还是5-9，效果反而更差，为什么？ 
+% % ！！ans: 关键参数有遗漏, 不区分区间，决策范围是1-10.numLabels = 10;
+len = size(mnistData, 2);
+numLabels = 10;
+mnistLabels = mnistLabels + 1;% shift 0-9 to 1-10
+unlabeledData = mnistData(:,1:len/2);
+labeledData = mnistData(:,len/2 + 1:end);
+labels = mnistLabels(len/2 + 1:end);
 
-numTrain = round(numel(labeledSet)/2);
-trainSet = labeledSet(1:numTrain);
-testSet  = labeledSet(numTrain+1:end);
 
-unlabeledData = mnistData(:, unlabeledSet);
+len = size(labeledData, 2);
+trainLen = bitshift(len, -1);
+trainData   = labeledData(:, 1:trainLen);
+trainLabels = labels( 1:trainLen)';
 
-trainData   = mnistData(:, trainSet);
-trainLabels = mnistLabels(trainSet)' + 1; % Shift Labels to the Range 1-5
+testData = labeledData(:, trainLen+1:end);
+testLabels = labels(trainLen+1:end)';
 
-testData   = mnistData(:, testSet);
-testLabels = mnistLabels(testSet)' + 1;   % Shift Labels to the Range 1-5
+
 
 % Output Some Statistics
 fprintf('# examples in unlabeled set: %d\n', size(unlabeledData, 2));
@@ -63,20 +76,36 @@ fprintf('# examples in supervised testing set: %d\n\n', size(testData, 2));
 %  images. 
 
 %  Randomly initialize the parameters
-theta = initializeParameters(hiddenSize, inputSize);
+
 
 %% ----------------- YOUR CODE HERE ----------------------
 %  Find opttheta by running the sparse autoencoder on
 %  unlabeledTrainingImages
+DEBUG = false;
+if DEBUG
+    theta = initializeParameters(hiddenSize, inputSize);
+    tic
+    [cost, grad] = sparseAutoencoderCost(theta, inputSize, hiddenSize, lambda, ...
+                                     sparsityParam, beta, unlabeledData(:,1:100), false);
+    numgrad = computeNumericalGradient( @(x, true) sparseAutoencoderCost(x, inputSize, ...
+                                                      hiddenSize, lambda, ...
+                                                      sparsityParam, beta, ...
+                                                      unlabeledData(:,1:100), true), theta);
 
-opttheta = theta; 
-
-
-
-
-
-
-
+    toc
+    % Compare numerically computed gradients with the ones obtained from backpropagation
+    diff = norm(numgrad-grad)/norm(numgrad+grad);
+    disp(diff); % Should be small. In our implementation, these values are usually less than 1e-9.
+    return;
+end
+theta = initializeParameters(hiddenSize, inputSize);
+options.Method = 'lbfgs';
+options.maxIter = maxIter;
+[opttheta, cost] = minFunc( @(p) sparseAutoencoderCost(p, ...
+                                   inputSize, hiddenSize, ...
+                                   lambda, sparsityParam, ...
+                                   beta, unlabeledData), ...
+                              theta, options);
 
 
 %% -----------------------------------------------------
@@ -106,13 +135,13 @@ softmaxModel = struct;
 %  classifier. 
 
 %  Use lambda = 1e-4 for the weight regularization for softmax
-
+lambda = 1e-4;
 % You need to compute softmaxModel using softmaxTrain on trainFeatures and
 % trainLabels
 
-
-
-
+options.maxIter = maxIter;
+softmaxModel = softmaxTrain(hiddenSize, numLabels, lambda, ...
+                            trainFeatures, trainLabels, options);
 
 
 
@@ -129,14 +158,7 @@ softmaxModel = struct;
 % Compute Predictions on the test set (testFeatures) using softmaxPredict
 % and softmaxModel
 
-
-
-
-
-
-
-
-
+[pred] = softmaxPredict(softmaxModel, testFeatures);
 
 
 

@@ -4,7 +4,11 @@
 
 ## 1. 详细推导softmax代价函数的梯度
 
-经典的logistics回归是二分类问题，输入向量$ x^{(i)}\in\Re^{n+1}$ 输出0,1判断$y^{(i)}\in{\{0,1\}}$，Softmax回归模型是一种多分类算法模型，输出包含k个类型，$y^{(i)}\in{\{0,1,…,k\}}$，在经典的多分类问题MNIST数字识别任务中包含0-9十个手写数字。softmax的思路是将输入值直接判决为k个类别的概率，这里就需要一个判决函数，softmax采用指数形式。求和的倒数是为了归一化概率。
+经典的logistics回归是二分类问题，输入向量$ x^{(i)}\in\Re^{n+1}$ 输出0,1判断$y^{(i)}\in{\{0,1\}}$，Softmax回归模型是一种多分类算法模型，如图所示，输出包含k个类型，$y^{(i)}\in{\{0,1,…,k\}}$。
+
+![](http://images2015.cnblogs.com/blog/1174358/201706/1174358-20170627010735836-1114036742.png)
+
+在经典的多分类问题MNIST数字识别任务中包含0-9十个手写数字。softmax的思路是将输入值直接判决为k个类别的概率，这里就需要一个判决函数，softmax采用指数形式。求和的倒数是为了归一化概率。
 
 $$h_\theta(x^{(i)})=\begin{bmatrix}p(y^{(i)}=1|x^{(i)};\theta)\\ p(y^{(i)}=2|x^{(i)};\theta)\\\vdots\\ p(y^{(i)}=k|x^{(i)};\theta)\\\end{bmatrix}=\frac{1}{\sum_{j=1}^k  e^{\theta_j^T \cdot x^{(i)}}}\begin{bmatrix} e^{\theta_1^T \cdot x^{(i)}} \\ e^{\theta_2^T \cdot x^{(i)}}\\\vdots\\ e^{\theta_k^T \cdot x^{(i)}}\\\end{bmatrix}$$
 
@@ -106,6 +110,24 @@ grad = thetagrad(:);
 end
 
 ```
+
+另外一部分需要稍动脑筋的是预测判断。怎样写的简捷高效呢？请看下文.
+
+```matlab
+function [pred] = softmaxPredict(softmaxModel, data)
+theta = softmaxModel.optTheta;  % this provides a numClasses x inputSize matrix
+pred = zeros(1, size(data, 2));
+
+inputSize = softmaxModel.inputSize;
+numClasses=  softmaxModel.numClasses;
+
+%% ---------- YOUR CODE HERE --------------------------------------
+z=exp(theta*data);
+[~, pred] = max(z);
+end
+```
+
+关键在于使用matlab的`max`函数第二个返回值，它就是**每列**最大值的行号。
 
 ## 4. 图示与结果
 
