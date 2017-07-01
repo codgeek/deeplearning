@@ -20,22 +20,28 @@
 
 inputSize = 28 * 28;
 numClasses = 10;
-hiddenSizeL1 = 200;    % Layer 1 Hidden Size
-hiddenSizeL2 = 200;    % Layer 2 Hidden Size
+hiddenSizeL1 = 196;    % Layer 1 Hidden Size
+hiddenSizeL2 = 196;    % Layer 2 Hidden Size
 sparsityParam = 0.1;   % desired average activation of the hidden units.
                        % (This was denoted by the Greek alphabet rho, which looks like a lower-case "p",
 		               %  in the lecture notes). 
 lambda = 3e-3;         % weight decay parameter       
 beta = 3;              % weight of sparsity penalty term       
-
+maxIter = 400;
 %%======================================================================
 %% STEP 1: Load data from the MNIST database
 %
 %  This loads our training data from the MNIST database files.
-
+addpath('../mnist');
+addpath('../sparseae_exercise/starter');
+addpath('../sparseae_exercise/starter/minFunc');
+addpath('../softmax_exercise');
 % Load MNIST database files
-trainData = loadMNISTImages('mnist/train-images-idx3-ubyte');
-trainLabels = loadMNISTLabels('mnist/train-labels-idx1-ubyte');
+trainData = loadMNISTImages('train-images.idx3-ubyte');
+trainLabels = loadMNISTLabels('train-labels.idx1-ubyte');
+
+% trainData = trainData(:,1:1000);
+% trainLabels = trainLabels(1:1000);
 
 trainLabels(trainLabels == 0) = 10; % Remap 0 to 10 since our labels need to start from 1
 
@@ -55,22 +61,18 @@ sae1Theta = initializeParameters(hiddenSizeL1, inputSize);
 %                an hidden size of "hiddenSizeL1"
 %                You should store the optimal parameters in sae1OptTheta
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+options.Method = 'lbfgs';
+options.maxIter = maxIter;
+[sae1OptTheta, ~] = minFunc( @(p) sparseAutoencoderCost(p, ...
+                                   inputSize, hiddenSizeL1, ...
+                                   lambda, sparsityParam, ...
+                                   beta, trainData), ...
+                              sae1Theta, options);
 
 % -------------------------------------------------------------------------
-
+% Visualize weights
+W1 = reshape(sae1OptTheta(1:hiddenSizeL1 * inputSize), hiddenSizeL1, inputSize);
+display_network(W1');
 
 
 %%======================================================================
@@ -93,20 +95,16 @@ sae2Theta = initializeParameters(hiddenSizeL2, hiddenSizeL1);
 %
 %                You should store the optimal parameters in sae2OptTheta
 
-
-
-
-
-
-
-
-
-
-
-
+[sae2OptTheta, cost] = minFunc( @(p) sparseAutoencoderCost(p, ...
+                                   hiddenSizeL1, hiddenSizeL2, ...
+                                   lambda, sparsityParam, ...
+                                   beta, sae1Features), ...
+                              sae2Theta, options);
 
 % -------------------------------------------------------------------------
-
+% Visualize weights
+W2 = reshape(sae2OptTheta(1:hiddenSizeL1 * hiddenSizeL2), hiddenSizeL2, hiddenSizeL1);
+display_network(W2',14);
 
 %%======================================================================
 %% STEP 3: Train the softmax classifier
@@ -131,18 +129,16 @@ saeSoftmaxTheta = 0.005 * randn(hiddenSizeL2 * numClasses, 1);
 %  NOTE: If you used softmaxTrain to complete this part of the exercise,
 %        set saeSoftmaxOptTheta = softmaxModel.optTheta(:);
 
-
-
-
-
-
-
-
-
+% options.TolFun = 1e-7;
+softmaxModel = softmaxTrain(hiddenSizeL2, numClasses, lambda, ...
+                            sae2Features, trainLabels', options);
+saeSoftmaxOptTheta = softmaxModel.optTheta(:);
 
 
 % -------------------------------------------------------------------------
-
+% Visualize weights
+W1 = reshape(saeSoftmaxOptTheta(1:numClasses * hiddenSizeL2), numClasses, hiddenSizeL2);
+display_network(W1');
 
 
 %%======================================================================
@@ -171,36 +167,30 @@ stackedAETheta = [ saeSoftmaxOptTheta ; stackparams ];
 %
 %
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+[stackedAEOptTheta, cost] = minFunc( @(p) stackedAECost(p, inputSize, hiddenSizeL2, ...
+                                              numClasses, netconfig, ...
+                                              lambda, trainData, trainLabels), ...
+                              stackedAETheta, options);
 
 
 
 % -------------------------------------------------------------------------
-
-
-
+% visualize difference of weights in three layer
+% Extract out the "stack"
+thetaCell = params2stack(stackedAEOptTheta(hiddenSizeL2*numClasses+1:end), netconfig);
+display_network((thetaCell{1}.w)');
+display_network((thetaCell{2}.w)');
+W3 = reshape(stackedAEOptTheta(1:hiddenSizeL2*numClasses), numClasses, hiddenSizeL2);
+display_network(W3');
 %%======================================================================
 %% STEP 6: Test 
 %  Instructions: You will need to complete the code in stackedAEPredict.m
 %                before running this part of the code
 %
-
 % Get labelled test images
 % Note that we apply the same kind of preprocessing as the training set
-testData = loadMNISTImages('mnist/t10k-images-idx3-ubyte');
-testLabels = loadMNISTLabels('mnist/t10k-labels-idx1-ubyte');
+testData = loadMNISTImages('t10k-images.idx3-ubyte');
+testLabels = loadMNISTLabels('t10k-labels.idx1-ubyte');
 
 testLabels(testLabels == 0) = 10; % Remap 0 to 10
 
@@ -215,6 +205,8 @@ fprintf('Before Finetuning Test Accuracy: %0.3f%%\n', acc * 100);
 
 acc = mean(testLabels(:) == pred(:));
 fprintf('After Finetuning Test Accuracy: %0.3f%%\n', acc * 100);
+
+% 实际运行结果 Before Finetuning Test Accuracy: 87.750% . After Finetuning Test Accuracy: 97.840%
 
 % Accuracy is the proportion of correctly classified images
 % The results for our implementation were:

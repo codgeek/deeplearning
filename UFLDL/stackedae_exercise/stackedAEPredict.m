@@ -23,16 +23,15 @@ stack = params2stack(theta(hiddenSize*numClasses+1:end), netconfig);
 %% ---------- YOUR CODE HERE --------------------------------------
 %  Instructions: Compute pred using theta assuming that the labels start 
 %                from 1.
+M = size(data, 2);
+activeValue = data;
+numStack = numel(stack);
+for d = 1:numStack
+    activeValue = sigmoid( stack{d}.w*activeValue +  repmat(stack{d}.b, 1, M));
+end
 
-
-
-
-
-
-
-
-
-
+z=softmaxTheta*activeValue;
+[~, pred] = max(z);
 
 % -----------------------------------------------------------
 

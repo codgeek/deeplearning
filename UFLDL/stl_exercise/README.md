@@ -6,14 +6,14 @@
 
 “[UFLDL 无监督特征学习](http://deeplearning.stanford.edu/wiki/index.php/%E8%87%AA%E6%88%91%E5%AD%A6%E4%B9%A0)”本节全称为**自我学习与无监督特征学习**，和前一节[softmax回归](http://www.cnblogs.com/Deep-Learning/p/7073744.html)很类似，所以本篇笔记会比较简化，主题思路和步骤如下：
 
-- 是把有标签数据分为两份，先对一份原始数据做[无监督的稀疏自编码](http://www.cnblogs.com/Deep-Learning/p/6978115.html)训练，获得输入层到隐藏层的最优化权值参数$W, b$；
+- 把有标签数据分为两份，先对一份原始数据做[无监督的稀疏自编码](http://www.cnblogs.com/Deep-Learning/p/6978115.html)训练，获得输入层到隐藏层的最优化权值参数$W, b$；
 - 把另一份数据分成分成训练集与测试集，都送入该参数对应的第一层网络(去掉输出层的稀疏自编码网络)；
 - 用训练集输出的特征作为输入，训练softmax分类器；
 - 再用此参数对测试集进行分类，计算出分类准确率。
 
 后面两个步骤和前一节[softmax回归](http://www.cnblogs.com/Deep-Learning/p/7073744.html)相同，区别仅仅是输入变成了原始数据的稀疏自编码隐藏层激活值。
 
-![](http://images2015.cnblogs.com/blog/1174358/201706/1174358-20170627011055852-1849729455.png)
+![](http://images2015.cnblogs.com/blog/1174358/201706/1174358-20170629225828602-1044124334.png)
 
 特征提取网络组合形态
 
@@ -21,7 +21,7 @@
 
 ## 3. 代码实现
 
-根据前面的步骤描述，我们要实现对有监督数据的特征提取，为了报出稀疏自编码模块`sparseAutoencoderCost.m`的独立性，单独写一个`feedForwardAutoencoder.m`模块来实现。代码是不是非常简单？
+根据前面的步骤描述，我们要实现对有监督数据的特征提取，为了保持稀疏自编码模块`sparseAutoencoderCost.m`的独立性，单独写一个`feedForwardAutoencoder.m`模块来实现。代码是不是非常简单？
 
 ```matlab
 function [activation] = feedForwardAutoencoder(theta, hiddenSize, visibleSize, data)
@@ -60,4 +60,3 @@ end
 ![](http://images2015.cnblogs.com/blog/1174358/201706/1174358-20170627011156602-1171477272.png)
 
 结果有些意外又可以解释：准确率为95.8%。 可以解释为稀疏自编码、softmax有监督学习对每个分类的数据量都减少了，在1E5量级上，数据量对结果好坏有明显的影响。
-
