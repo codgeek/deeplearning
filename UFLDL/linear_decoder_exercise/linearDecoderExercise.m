@@ -42,6 +42,9 @@ epsilon = 0.1;	       % epsilon for ZCA whitening
 % To speed up gradient checking, we will use a reduced network and some
 % dummy patches
 
+addpath('../sparseae_exercise/starter');
+addpath('../sparseae_exercise/starter/minFunc');
+
 debugHiddenSize = 5;
 debugvisibleSize = 8;
 patches = rand([8 10]);
@@ -80,7 +83,8 @@ assert(diff < 1e-9, 'Difference too large. Check your gradient computation again
 %  visualize them. Note that these patches have been scaled to [0,1]
 
 load stlSampledPatches.mat
-
+% patches = patches(:, 1:1000);% test
+numPatches = size(patches,2);
 displayColorNetwork(patches(:, 1:100));
 
 %% STEP 2b: Apply preprocessing
@@ -112,7 +116,7 @@ displayColorNetwork(patches(:, 1:100));
 theta = initializeParameters(hiddenSize, visibleSize);
 
 % Use minFunc to minimize the function
-addpath minFunc/
+
 
 options = struct;
 options.Method = 'lbfgs'; 

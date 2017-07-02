@@ -33,11 +33,11 @@ $$\begin{align} \frac {\nabla J} {\nabla \theta_j} &= -\frac 1 m\sum_{i=1}^m  x^
 
 矩阵化表达为：
 
-$$ \begin{align} \frac {\nabla J} {\nabla \theta} &=-\frac 1 m (G_{k \times m}-P_{k\times m}) *X_{(n+1) \times m}^T  +\lambda\theta                     \end{align} $$
+$$ \begin{align} \frac {\nabla J} {\nabla \theta} &=-\frac 1 m (G_{k \times m}-P_{k\times m}) *X_{(n+1) \times m}^T  +\lambda\theta ;  \    X_{(n+1) \times m}^T \dot= a^{(3)}              \end{align} $$
 
 使用[稀疏自编码](http://www.cnblogs.com/Deep-Learning/p/6978115.html) 中相同的方法，推导残差后向传导形式，即可得到代价函数对$W^{(1)}, b^{(1)}; W^{(2)}, b^{(2)}$的梯度，
 
-由于softma输出并没有用$sigmoid$函数，则激活值对输出值的偏导为1，输出层$n_l=4$
+由于softmax输出并没有用$sigmoid$函数，而是$f(z)=e^z$，d则激活值对输出值的偏导为1，输出层$n_l=4$
 
 $$\begin{align}        \delta_i^{(n_l)}  &= -(y_i-a_i^{(n_l)})*f'(z_i^{(n_l)}) \\  &= -y_i-a_i^{(n_l)}  \\    vectorize \\  \delta^{(n_l)}  &= -(G_{k \times m}-P_{k\times m})      \end{align}$$
 
@@ -57,7 +57,7 @@ $$\begin{align}         \frac {\nabla J} {\nabla W^{(1)}}  & = \frac 1 m\delta^{
 
 ## 3. 代码实现
 
-根据前面的步骤描述，复用原来的系数自编码模块外，我们要增加fine tune的全局代价函数对权重的梯度，实现代码为`stackedAECost.m`，详见[https://github.com/codgeek/deeplearning](https://github.com/codgeek/deeplearning) 
+根据前面的步骤描述，复用原来的稀疏自编码模块外，我们要增加fine tune的全局代价函数对权重的梯度，实现代码为`stackedAECost.m`，详见[https://github.com/codgeek/deeplearning](https://github.com/codgeek/deeplearning) 
 
 ```matlab
 function [ cost, grad ] = stackedAECost(theta, inputSize, hiddenSize, ...
@@ -149,8 +149,8 @@ end
 
 |            | 逐层贪心训练                                   | 微调后                                      |
 | ---------- | ---------------------------------------- | ---------------------------------------- |
-| 第一隐层       |![](http://images2015.cnblogs.com/blog/1174358/201707/1174358-20170702014601383-624433976.png)|![](http://images2015.cnblogs.com/blog/1174358/201707/1174358-20170702014611993-445860565.png) |
-| 第二隐层       |![](http://images2015.cnblogs.com/blog/1174358/201707/1174358-20170702014635618-942131282.png)|![](http://images2015.cnblogs.com/blog/1174358/201707/1174358-20170702014656743-914794932.png) |
-| softmax输出层 |![](http://images2015.cnblogs.com/blog/1174358/201707/1174358-20170702014703618-297649876.png)|![](http://images2015.cnblogs.com/blog/1174358/201707/1174358-20170702014710289-2050005217.png)  |
+| 第一隐层       | ![](http://images2015.cnblogs.com/blog/1174358/201707/1174358-20170702014601383-624433976.png) | ![](http://images2015.cnblogs.com/blog/1174358/201707/1174358-20170702014611993-445860565.png) |
+| 第二隐层       | ![](http://images2015.cnblogs.com/blog/1174358/201707/1174358-20170702014635618-942131282.png) | ![](http://images2015.cnblogs.com/blog/1174358/201707/1174358-20170702014656743-914794932.png) |
+| softmax输出层 | ![](http://images2015.cnblogs.com/blog/1174358/201707/1174358-20170702014703618-297649876.png) | ![](http://images2015.cnblogs.com/blog/1174358/201707/1174358-20170702014710289-2050005217.png) |
 
 类似稀疏自编码对边缘的学习，上图的第一隐藏层特征可理解为笔记钩旋弧线特征，第二隐藏层就难以理解为直观的含义了，深层网络不一定每一层都能对应到人脑对事物的一层理解上，此外微调后似乎是增加了干扰，也期待大牛们能解释一下这些变化！
