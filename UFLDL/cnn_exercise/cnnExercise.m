@@ -41,8 +41,10 @@ poolDim = 19;          % dimension of pooling region
 optTheta =  zeros(2*hiddenSize*visibleSize+hiddenSize+visibleSize, 1);
 ZCAWhite =  zeros(visibleSize, visibleSize);
 meanPatch = zeros(visibleSize, 1);
-
-
+load '../linear_decoder_exercise/STL10Features.mat';
+addpath '../linear_decoder_exercise';
+addpath '../stackedae_exercise';
+addpath '../softmax_exercise';
 % --------------------------------------------------------------------
 
 % Display and check to see that the features look good
@@ -104,7 +106,7 @@ for i = 1:1000
 end
 
 disp('Congratulations! Your convolution code passed the test.');
-
+% return;
 %% STEP 2c: Implement pooling
 %  Implement pooling in the function cnnPool in cnnPool.m
 
@@ -144,7 +146,7 @@ end
 %  convolution and pooling 50 features at a time to avoid running out of
 %  memory. Reduce this number if necessary
 
-stepSize = 50;
+stepSize = 80;
 assert(mod(hiddenSize, stepSize) == 0, 'stepSize should divide hiddenSize');
 
 load stlTrainSubset.mat % loads numTrainImages, trainImages, trainLabels
@@ -214,7 +216,7 @@ softmaxY = trainLabels;
 options = struct;
 options.maxIter = 200;
 softmaxModel = softmaxTrain(numel(pooledFeaturesTrain) / numTrainImages,...
-    numClasses, softmaxLambda, softmaxX, softmaxY, options);
+    numClasses, softmaxLambda, softmaxX, softmaxY', options);
 
 %%======================================================================
 %% STEP 5: Test classifer
