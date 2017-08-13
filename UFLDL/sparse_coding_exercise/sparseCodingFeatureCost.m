@@ -37,5 +37,16 @@ function [cost, grad] = sparseCodingFeatureCost(weightMatrix, featureMatrix, vis
     %   the grouping matrix groupMatrix first, and extend the 
     %   non-topographic version to the topographic version later.
     % -------------------- YOUR CODE HERE --------------------
+    linearError = weightMatrix * featureMatrix - patches;
+    normError = sum(sum(linearError .* linearError))./numExamples;
+    normWeight = sum(sum(weightMatrix .* weightMatrix));
+%     smoothFeature = sqrt(featureMatrix .* featureMatrix + epsilon);
+%     prefixParam = repmat(diag(groupMatrix),1,numExamples);
+    topoFeature = groupMatrix*(featureMatrix.*featureMatrix);
+    smoothFeature = sqrt(topoFeature + epsilon);
+    costFeature = sum(sum(smoothFeature));% L1 范数为sum(|x|),对x加上平滑参数后,sum(sqrt(x2+epsilon)).容易错写为sqrt(sum(x2+epsilon))实际是L2范数
     
+    cost = normError + lambda.*costFeature + gamma.*normWeight;
+    grad = 2./numExamples.*(weightMatrix' * linearError) + lambda.*featureMatrix.*( (groupMatrix')*(1 ./ smoothFeature) );% 不止(f,i)本项偏导非零，(f-1,i)……，groupMatrix第f列不为0的所有行对应项都有s(f,i)的偏导
+    grad = grad(:);
 end

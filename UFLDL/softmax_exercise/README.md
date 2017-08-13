@@ -22,7 +22,7 @@ $$J(\theta)=-\frac 1 m \left [\sum_{i=1}^m\sum_{j=1}^k 1\{y^{(i)}=j\}\cdot log(p
 
 原文[Softmax回归](http://deeplearning.stanford.edu/wiki/index.php/Softmax%E5%9B%9E%E5%BD%92)中**略过了求偏导的过程，下文对其做分步推导**。$\theta_j$是行向量，表示每个输入x与第j个输出分类连接的权重，	将对数内除法拆分为减法可得：
 
-$$ J(\theta)=-\frac 1 m \left [\sum_{i=1}^m\sum_{j=1}^k 1\{y^{(i)}=j\}\cdot ({\theta_j^T x^{(i)}}-log(\sum_{l=1}^ke^{\theta_l^T \cdot x^{(i)}})) \right] +\frac \lambda 2 \sum_{i=1}^k\sum_{j=0}^n\theta_{ij}^2 $$
+$$ J(\theta)=-\frac 1 m \left [\sum_{i=1}^m\sum_{j=1}^k 1\{y^{(i)}=j\}\cdot ({\theta_j^T x^{(i)}}-log(\sum_{l=1}^ke^{\theta_l^T \cdot x^{(i)}})) \right] +\frac \lambda 2 \sum_{i=1}^k\sum_{j=1}^n\theta_{ij}^2 $$
 
 对$\theta_j$求偏导，可得:
 

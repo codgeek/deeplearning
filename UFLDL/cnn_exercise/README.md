@@ -11,7 +11,7 @@
 <center><img src="http://images2015.cnblogs.com/blog/1174358/201707/1174358-20170702161455743-1737131402.png" width="500"  /></center>
 
 
-我们知道对于一个典型的神经网络，训练到的权重参数维度表示为$W^{(1)}_{hiddenSize \times inputSize}  , b^{(1)}_{hiddenSize \times 1} ; _{hiddenSize=patchDim \times patchDim}$,在原文“[UFLDL **卷积神经网络**](http://deeplearning.stanford.edu/wiki/index.php/%E5%8D%B7%E7%A7%AF%E7%89%B9%E5%BE%81%E6%8F%90%E5%8F%96)”中，所描述的过程是 <u>“取$W^{(1)}$与大图像的每个 $ patchDim \times patchDim $ 子图像做乘法，对 $f_{convoled}$ 值做卷积，就可以得到卷积后的矩阵”</u>  。没有解释清楚经典的前向传播为什么变成了图像卷积的，以及谁和谁卷积。 接下来我们来慢慢理解一下这个转变过程。
+我们知道对于一个典型的神经网络，训练到的权重参数维度表示为$W^{(1)}_{hiddenSize \times inputSize}  , b^{(1)}_{hiddenSize \times 1} ; _{hiddenSize=patchDim \times patchDim}$,在原文“[UFLDL **卷积神经网络**](http://deeplearning.stanford.edu/wiki/index.php/%E5%8D%B7%E7%A7%AF%E7%89%B9%E5%BE%81%E6%8F%90%E5%8F%96)”中，所描述的过程是 <u>“取$W^{(1)}$与大图像的每个 $ patchDim \times patchDim $ 子图像做乘法，对 $f_{convoled}$ 值做卷积，就可以得到卷积后的矩阵”</u> 。没有解释清楚经典的前向传播为什么变成了图像卷积的，以及谁和谁卷积。 接下来我们来慢慢理解一下这个转变过程。
 
 对于大图像$X_{r \times c}$我们设想的是取每一个子矩阵$X_{patchDim \times patchDim}$和$W^{(1)}$按照小尺寸图像来做前向传播，所以共需要做$(r-patchDim)\times(c-patchDim)$次前向传播，每一次表示为$h_{hiddenSize \times 1}=\sigma( W^{(1)}*X_{patchDim \times patchDim} (:)+b^{(1)}_{hiddenSize \times 1})$. 所以说会得到$hiddenSize \times (r-patchDim)\times(c-patchDim)$的特征矩阵。接下来需要做一个交换，才能看出来怎么用卷积函数；计算$h_{hiddenSize \times 1}$的步骤里$W^{(1)}$的每一行和和$X_{patchDim \times patchDim}$转成一列向量后进行点积，可以和做$(r-patchDim)\times(c-patchDim)$次前向传播顺序交换，也就是说取$W^{(1)}$的每一行转成$patchDim\times patchDim$的矩阵和$X_{r \times c}$的每一个子矩阵$X_{patchDim \times patchDim}$做点乘求和，**这不正好是二维卷积吗！**，是的，卷积就是这样来的，本质上是对大图像每个小邻域的前向传播，正好运用了二维矩阵卷积这个工具。
 
@@ -100,5 +100,11 @@ end
 
 ![](http://images2015.cnblogs.com/blog/1174358/201707/1174358-20170709002907644-334781897.png)
 
+![](http://images2015.cnblogs.com/blog/1174358/201707/1174358-20170709094152853-1785297517.png)
 
 设定与[练习说明](http://deeplearning.stanford.edu/wiki/index.php/Exercise:Convolution_and_Pooling)相同的参数，输入每个图像为64X64X3的彩色图片，共有四个分类 (airplane, car, cat, dog)。运行代码主文件[cnnExercise.m](https://github.com/codgeek/deeplearning/tree/master/UFLDL/cnn_exercise) 可以看到预测准确率为80.4%。与练习的标准结果吻合。分类的准确其实并不高，一方面原因在于下采样倍率较大，下采样后的图片人眼基本无法分类，而通过特征学习、进一步进行卷积网络学习，仍然可以达到一定的准确率。
+
+![](http://images2015.cnblogs.com/blog/1174358/201707/1174358-20170709101350197-589208250.png)
+我们看一下在ImageNet 全量数据集上分类准确率数据，统计数据来来自[An Analysis of Deep Neural Network Models for Practical Applications](https://arxiv.org/pdf/1605.07678). 截止到2017年初的统计，最好的深度神经网络(DNN)算法分类准确率也不过80%，我们怎么轻松就达到80%了，吴恩达老师是不是也太牛了? 不过不要高兴太早了，上述的实验仅仅使用了四个图片类型的数据集，连[STL10](http://cs.stanford.edu/~acoates/stl10/)上面的10种类别还没用完，更不用说ImageNet上更多的种类了~ O(∩_∩)O哈哈~
+ 下一阶段准备用STL10的全量10种图片，以及ImageNet上的数据集进行算法训练。STL10包含100000张未标注图片，500张训练图片、800张测试图片。而ImageNet的数据更大包含14,197,122 张图片，共有21841个同类集合。包含SIFT特征的图片为 1.2 million，可以理解为有标注图片数量。 相信不断增加的海量数据会不断提高分类算法的准确率！
+

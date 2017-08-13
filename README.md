@@ -1,1 +1,1 @@
-# deeplearning
+# deeplearning notes blog:http://www.cnblogs.com/Deep-Learning/

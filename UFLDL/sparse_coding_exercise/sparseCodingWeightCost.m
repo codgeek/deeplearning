@@ -17,7 +17,6 @@ function [cost, grad] = sparseCodingWeightCost(weightMatrix, featureMatrix, visi
 %                   features included in the rth group. groupMatrix(r, c)
 %                   is 1 if the cth feature is in the rth group and 0
 %                   otherwise.
-
     if exist('groupMatrix', 'var')
         assert(size(groupMatrix, 2) == numFeatures, 'groupMatrix has bad dimension');
     else
@@ -34,5 +33,19 @@ function [cost, grad] = sparseCodingWeightCost(weightMatrix, featureMatrix, visi
     %   Write code to compute the cost and gradient with respect to the
     %   weights given in weightMatrix.     
     % -------------------- YOUR CODE HERE --------------------    
+    linearError = weightMatrix * featureMatrix - patches;
+    normError = sum(sum(linearError .* linearError))./numExamples;% 公式中代价项是二阶范数的平方，所以不用在开方
+    normWeight = sum(sum(weightMatrix .* weightMatrix));
+    
+    topoFeature = groupMatrix*(featureMatrix.*featureMatrix);
+    smoothFeature = sqrt(topoFeature + epsilon);
+    costFeature = sum(sum(smoothFeature));% L1 范数为sum(|x|),对x加上平滑参数后,sum(sqrt(x2+epsilon)).容易错写为sqrt(sum(x2+epsilon))实际是L2范数
+    
+%     cost = normError + gamma.*normWeight;
+    cost = normError + lambda.*costFeature + gamma.*normWeight;
+    grad = 2./numExamples.*(linearError*featureMatrix') + (2*gamma) .* weightMatrix;
+%     grad = 2.*(weightMatrix*featureMatrix - patches)*featureMatrix' + 2.*gamma*weightMatrix;
+    grad = grad(:);
 
 end
+
